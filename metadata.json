@@ -1,0 +1,5 @@
+{
+  "name": "BarberFlow Spain",
+  "description": "Central digital de barbearias em Espanha. Organizada por comunidade autónoma, com agendamento online e painel de gestão completo.",
+  "requestFramePermissions": ["geolocation"]
+}

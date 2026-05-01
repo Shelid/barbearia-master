@@ -1,0 +1,5 @@
+# Vercel Build Configuration
+# This file ensures Vercel uses the correct build settings
+
+# Force Vercel to use the latest commit
+BUILD_COMMIT=cedf514

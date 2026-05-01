@@ -1,0 +1,440 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isPlatformAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.keys().hasAny(['platformAdmin']) &&
+        request.auth.token.platformAdmin == true;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() > 3 &&
+        email.size() < 100 &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isOptionalString(value, maxSize) {
+      return value == null || (value is string && value.size() <= maxSize);
+    }
+
+    function isOptionalTimestampLike(value) {
+      return value == null || value is string || value is timestamp;
+    }
+
+    function hasCurrentUserDoc() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isShopOwnedByCurrentUser(shopId) {
+      return exists(/databases/$(database)/documents/barbershops/$(shopId)) &&
+        (
+          !get(/databases/$(database)/documents/barbershops/$(shopId)).data.keys().hasAny(['ownerUid']) ||
+          get(/databases/$(database)/documents/barbershops/$(shopId)).data.ownerUid == request.auth.uid
+        );
+    }
+
+    function isShopAdmin(shopId) {
+      return hasCurrentUserDoc() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.barbershopId == shopId &&
+        isShopOwnedByCurrentUser(shopId);
+    }
+
+    function isValidUserCreate(userId, data) {
+      let allowedFields = ['uid', 'email', 'displayName', 'photoUrl', 'photoURL', 'birthdate', 'role', 'barbershopId', 'createdAt'];
+      let barbershopIdPresent = data.keys().hasAny(['barbershopId']);
+      let isClientProfile = data.role == 'client' &&
+        (!barbershopIdPresent || data.barbershopId == null);
+      let isAdminProfile = data.role == 'admin' &&
+        data.barbershopId is string &&
+        exists(/databases/$(database)/documents/barbershops/$(data.barbershopId)) &&
+        get(/databases/$(database)/documents/barbershops/$(data.barbershopId)).data.ownerUid == request.auth.uid;
+
+      return data.keys().hasOnly(allowedFields) &&
+        data.uid == userId &&
+        data.uid == request.auth.uid &&
+        isValidEmail(data.email) &&
+        request.auth.token.email is string &&
+        data.email == request.auth.token.email &&
+        (!data.keys().hasAny(['displayName']) || isOptionalString(data.displayName, 120)) &&
+        (!data.keys().hasAny(['photoUrl']) || isOptionalString(data.photoUrl, 2000)) &&
+        (!data.keys().hasAny(['photoURL']) || isOptionalString(data.photoURL, 2000)) &&
+        (!data.keys().hasAny(['birthdate']) || isOptionalString(data.birthdate, 20)) &&
+        (!data.keys().hasAny(['createdAt']) || isOptionalTimestampLike(data.createdAt)) &&
+        (isClientProfile || isAdminProfile);
+    }
+
+    function isAllowedSelfProfileEdit(userId) {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return isOwner(userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.barbershopId == resource.data.barbershopId &&
+        changedKeys.hasOnly(['displayName', 'birthdate', 'photoUrl', 'photoURL']) &&
+        (!request.resource.data.keys().hasAny(['displayName']) || isOptionalString(request.resource.data.displayName, 120)) &&
+        (!request.resource.data.keys().hasAny(['photoUrl']) || isOptionalString(request.resource.data.photoUrl, 2000)) &&
+        (!request.resource.data.keys().hasAny(['photoURL']) || isOptionalString(request.resource.data.photoURL, 2000)) &&
+        (!request.resource.data.keys().hasAny(['birthdate']) || isOptionalString(request.resource.data.birthdate, 20));
+    }
+
+    function isAllowedClientToAdminUpgrade(userId) {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return isOwner(userId) &&
+        resource.data.role == 'client' &&
+        request.resource.data.role == 'admin' &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.barbershopId is string &&
+        exists(/databases/$(database)/documents/barbershops/$(request.resource.data.barbershopId)) &&
+        get(/databases/$(database)/documents/barbershops/$(request.resource.data.barbershopId)).data.ownerUid == request.auth.uid &&
+        changedKeys.hasOnly(['role', 'barbershopId', 'displayName', 'createdAt']) &&
+        (!request.resource.data.keys().hasAny(['displayName']) || isOptionalString(request.resource.data.displayName, 120)) &&
+        (!request.resource.data.keys().hasAny(['createdAt']) || isOptionalTimestampLike(request.resource.data.createdAt));
+    }
+
+    function isAllowedAdminDetachOwnShop(userId) {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return isOwner(userId) &&
+        resource.data.role == 'admin' &&
+        request.resource.data.role == 'admin' &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.barbershopId == null &&
+        changedKeys.hasOnly(['barbershopId']);
+    }
+
+    function isValidBarbershop(data, shopId) {
+      return data.slug is string &&
+        data.slug.size() > 0 &&
+        data.slug.size() < 100 &&
+        data.name is string &&
+        data.name.size() > 0 &&
+        data.name.size() < 120 &&
+        data.region is string &&
+        data.region.size() > 0 &&
+        data.region.size() < 100 &&
+        data.city is string &&
+        data.city.size() > 0 &&
+        data.city.size() < 100 &&
+        data.active is bool &&
+        data.ownerUid is string &&
+        data.ownerUid.size() > 0 &&
+        (!data.keys().hasAny(['id']) || data.id == shopId) &&
+        (!data.keys().hasAny(['plan']) || data.plan in ['starter', 'pro', 'business']) &&
+        (!data.keys().hasAny(['setupComplete']) || data.setupComplete is bool) &&
+        (!data.keys().hasAny(['hasExactLocation']) || data.hasExactLocation is bool) &&
+        (!data.keys().hasAny(['latitude']) || data.latitude == null || data.latitude is number) &&
+        (!data.keys().hasAny(['longitude']) || data.longitude == null || data.longitude is number) &&
+        (!data.keys().hasAny(['notifyEmail']) || data.notifyEmail is bool) &&
+        (!data.keys().hasAny(['darkMode']) || data.darkMode is bool) &&
+        (!data.keys().hasAny(['autoAcceptEnabled']) || data.autoAcceptEnabled is bool) &&
+        (!data.keys().hasAny(['description']) || isOptionalString(data.description, 5000)) &&
+        (!data.keys().hasAny(['address']) || isOptionalString(data.address, 300)) &&
+        (!data.keys().hasAny(['locationReference']) || isOptionalString(data.locationReference, 300)) &&
+        (!data.keys().hasAny(['phone']) || isOptionalString(data.phone, 50)) &&
+        (!data.keys().hasAny(['whatsapp']) || isOptionalString(data.whatsapp, 50)) &&
+        (!data.keys().hasAny(['regionSlug']) || isOptionalString(data.regionSlug, 120)) &&
+        (!data.keys().hasAny(['citySlug']) || isOptionalString(data.citySlug, 120)) &&
+        (!data.keys().hasAny(['geohash']) || isOptionalString(data.geohash, 40)) &&
+        (!data.keys().hasAny(['googleMapsUrl']) || isOptionalString(data.googleMapsUrl, 2000)) &&
+        (!data.keys().hasAny(['image']) || isOptionalString(data.image, 1200000)) &&
+        (!data.keys().hasAny(['logo']) || isOptionalString(data.logo, 1200000)) &&
+        (!data.keys().hasAny(['coverImage']) || isOptionalString(data.coverImage, 1200000)) &&
+        (!data.keys().hasAny(['createdAt']) || isOptionalTimestampLike(data.createdAt)) &&
+        (!data.keys().hasAny(['deletedAt']) || isOptionalTimestampLike(data.deletedAt));
+    }
+
+    function isValidHours(data) {
+      return data.dayOfWeek is int &&
+        data.dayOfWeek >= 0 &&
+        data.dayOfWeek <= 6 &&
+        data.closed is bool &&
+        (!data.keys().hasAny(['openTime']) || isOptionalString(data.openTime, 10)) &&
+        (!data.keys().hasAny(['closeTime']) || isOptionalString(data.closeTime, 10)) &&
+        (!data.keys().hasAny(['breakStart']) || isOptionalString(data.breakStart, 10)) &&
+        (!data.keys().hasAny(['breakEnd']) || isOptionalString(data.breakEnd, 10));
+    }
+
+    function isValidClosure(data) {
+      return data.startDate is string &&
+        data.endDate is string &&
+        (!data.keys().hasAny(['reason']) || isOptionalString(data.reason, 200)) &&
+        (!data.keys().hasAny(['notifyClients']) || data.notifyClients is bool);
+    }
+
+    function isValidOverride(data) {
+      return data.barberId is string &&
+        data.date is string &&
+        data.startTime is string &&
+        data.endTime is string &&
+        (!data.keys().hasAny(['reason']) || isOptionalString(data.reason, 200));
+    }
+
+    function isValidBarber(data, shopId) {
+      return data.barbershopId == shopId &&
+        data.name is string &&
+        data.name.size() > 0 &&
+        data.name.size() < 120 &&
+        data.active is bool &&
+        (!data.keys().hasAny(['bio']) || isOptionalString(data.bio, 500)) &&
+        (!data.keys().hasAny(['photoUrl']) || isOptionalString(data.photoUrl, 2000));
+    }
+
+    function isValidService(data, shopId) {
+      return data.barbershopId == shopId &&
+        data.name is string &&
+        data.name.size() > 0 &&
+        data.name.size() < 120 &&
+        data.price is number &&
+        data.durationMin is int &&
+        data.durationMin > 0 &&
+        data.durationMin <= 480 &&
+        data.active is bool &&
+        (!data.keys().hasAny(['featured']) || data.featured is bool) &&
+        (!data.keys().hasAny(['description']) || isOptionalString(data.description, 500));
+    }
+
+    function isValidBooking(data, shopId) {
+      let allowedFields = [
+        'barbershopId',
+        'barberId',
+        'barberName',
+        'serviceId',
+        'serviceName',
+        'price',
+        'clientUid',
+        'clientName',
+        'clientPhone',
+        'clientEmail',
+        'date',
+        'startTime',
+        'endTime',
+        'status',
+        'reviewed',
+        'clientRated',
+        'clientRating',
+        'createdAt',
+        'reminderChannel',
+        'prePaid'
+      ];
+
+      return data.keys().hasOnly(allowedFields) &&
+        data.barbershopId == shopId &&
+        data.barberId is string &&
+        data.serviceId is string &&
+        data.clientUid is string &&
+        data.clientName is string &&
+        data.clientName.size() > 0 &&
+        data.clientName.size() < 120 &&
+        data.date is string &&
+        data.startTime is string &&
+        data.status in ['pending', 'confirmed', 'cancelled', 'completed'] &&
+        (!data.keys().hasAny(['price']) || data.price is number) &&
+        (!data.keys().hasAny(['clientEmail']) || data.clientEmail == '' || isValidEmail(data.clientEmail)) &&
+        (!data.keys().hasAny(['clientPhone']) || isOptionalString(data.clientPhone, 30)) &&
+        (!data.keys().hasAny(['barberName']) || isOptionalString(data.barberName, 120)) &&
+        (!data.keys().hasAny(['serviceName']) || isOptionalString(data.serviceName, 120)) &&
+        (!data.keys().hasAny(['endTime']) || isOptionalString(data.endTime, 10)) &&
+        (!data.keys().hasAny(['reviewed']) || data.reviewed is bool) &&
+        (!data.keys().hasAny(['clientRated']) || data.clientRated is bool) &&
+        (!data.keys().hasAny(['clientRating']) || data.clientRating is number) &&
+        (!data.keys().hasAny(['reminderChannel']) || data.reminderChannel in ['whatsapp', 'email']) &&
+        (!data.keys().hasAny(['prePaid']) || data.prePaid is bool) &&
+        (!data.keys().hasAny(['createdAt']) || isOptionalTimestampLike(data.createdAt));
+    }
+
+    function isClientBookingCreate() {
+      return request.auth.uid == request.resource.data.clientUid &&
+        request.resource.data.status == 'pending';
+    }
+
+    function isClientCancellingBooking() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return request.auth.uid == resource.data.clientUid &&
+        changedKeys.hasOnly(['status']) &&
+        request.resource.data.status == 'cancelled' &&
+        resource.data.status in ['pending', 'confirmed'];
+    }
+
+    function isClientReviewingBooking(shopId, bookingId) {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return request.auth.uid == resource.data.clientUid &&
+        resource.data.barbershopId == shopId &&
+        resource.data.status == 'completed' &&
+        request.resource.data.reviewed == true &&
+        changedKeys.hasOnly(['reviewed']) &&
+        existsAfter(/databases/$(database)/documents/barbershops/$(shopId)/reviews/$(bookingId)) &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/reviews/$(bookingId)).data.bookingId == bookingId &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/reviews/$(bookingId)).data.clientUid == request.auth.uid &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/reviews/$(bookingId)).data.barbershopId == shopId;
+    }
+
+    function isValidBookedSlot(data, slotId) {
+      return data.keys().hasOnly(['date', 'startTime', 'barberId', 'status', 'bookingId']) &&
+        data.bookingId == slotId &&
+        data.date is string &&
+        data.startTime is string &&
+        data.barberId is string &&
+        data.status in ['pending', 'confirmed', 'cancelled', 'completed'];
+    }
+
+    function matchesBookingAfter(shopId, bookingId) {
+      return existsAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)) &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.barbershopId == shopId &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.barberId == request.resource.data.barberId &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.date == request.resource.data.date &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.startTime == request.resource.data.startTime &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.status == request.resource.data.status &&
+        (
+          isShopAdmin(shopId) ||
+          isPlatformAdmin() ||
+          getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.clientUid == request.auth.uid
+        );
+    }
+
+    function isValidReview(data, shopId, bookingId) {
+      return data.keys().hasOnly(['barbershopId', 'bookingId', 'clientUid', 'clientName', 'rating', 'comment', 'createdAt']) &&
+        data.barbershopId == shopId &&
+        data.bookingId == bookingId &&
+        data.clientUid == request.auth.uid &&
+        data.clientName is string &&
+        data.clientName.size() > 0 &&
+        data.clientName.size() < 120 &&
+        data.rating is number &&
+        data.rating >= 1 &&
+        data.rating <= 5 &&
+        (!data.keys().hasAny(['comment']) || isOptionalString(data.comment, 1000)) &&
+        (!data.keys().hasAny(['createdAt']) || isOptionalTimestampLike(data.createdAt));
+    }
+
+    function isReviewBackedByBooking(shopId, bookingId) {
+      return existsAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)) &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.barbershopId == shopId &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.clientUid == request.auth.uid &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.status == 'completed' &&
+        getAfter(/databases/$(database)/documents/barbershops/$(shopId)/bookings/$(bookingId)).data.reviewed == true;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isPlatformAdmin();
+      allow create: if isOwner(userId) && isValidUserCreate(userId, request.resource.data);
+      allow update: if isPlatformAdmin() ||
+        isAllowedSelfProfileEdit(userId) ||
+        isAllowedClientToAdminUpgrade(userId) ||
+        isAllowedAdminDetachOwnShop(userId);
+    }
+
+    match /barbershops/{shopId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        isValidBarbershop(request.resource.data, shopId) &&
+        request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isValidBarbershop(request.resource.data, shopId) &&
+        (
+          isPlatformAdmin() ||
+          (
+            isShopAdmin(shopId) &&
+            request.resource.data.ownerUid == resource.data.ownerUid
+          )
+        );
+      allow delete: if isPlatformAdmin();
+
+      match /hours/{dayId} {
+        allow read: if true;
+        allow write: if (isShopAdmin(shopId) || isPlatformAdmin()) && isValidHours(request.resource.data);
+      }
+
+      match /closures/{closureId} {
+        allow read: if true;
+        allow write: if (isShopAdmin(shopId) || isPlatformAdmin()) && isValidClosure(request.resource.data);
+      }
+
+      match /overrides/{overrideId} {
+        allow read: if true;
+        allow write: if (isShopAdmin(shopId) || isPlatformAdmin()) && isValidOverride(request.resource.data);
+      }
+
+      match /barbers/{barberId} {
+        allow read: if true;
+        allow write: if (isShopAdmin(shopId) || isPlatformAdmin()) && isValidBarber(request.resource.data, shopId);
+      }
+
+      match /services/{serviceId} {
+        allow read: if true;
+        allow write: if (isShopAdmin(shopId) || isPlatformAdmin()) && isValidService(request.resource.data, shopId);
+      }
+
+      match /gallery/{photoId} {
+        allow read: if true;
+        allow write: if isShopAdmin(shopId) || isPlatformAdmin();
+      }
+
+      match /bookings/{bookingId} {
+        allow read: if isAuthenticated() &&
+          (
+            isPlatformAdmin() ||
+            isShopAdmin(shopId) ||
+            request.auth.uid == resource.data.clientUid
+          );
+
+        allow create: if isAuthenticated() &&
+          isValidBooking(request.resource.data, shopId) &&
+          (
+            (isClientBookingCreate() && request.resource.data.barbershopId == shopId) ||
+            isShopAdmin(shopId) ||
+            isPlatformAdmin()
+          );
+
+        allow update: if isAuthenticated() &&
+          isValidBooking(request.resource.data, shopId) &&
+          (
+            isPlatformAdmin() ||
+            isShopAdmin(shopId) ||
+            isClientCancellingBooking() ||
+            isClientReviewingBooking(shopId, bookingId)
+          );
+      }
+
+      match /booked_slots/{slotId} {
+        allow read: if true;
+        allow create: if isAuthenticated() &&
+          isValidBookedSlot(request.resource.data, slotId) &&
+          matchesBookingAfter(shopId, slotId);
+        allow update, delete: if isShopAdmin(shopId) || isPlatformAdmin();
+      }
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuthenticated() &&
+          isValidReview(request.resource.data, shopId, reviewId) &&
+          isReviewBackedByBooking(shopId, reviewId);
+        allow update, delete: if isShopAdmin(shopId) || isPlatformAdmin();
+      }
+
+      match /waitlist/{waitlistId} {
+        allow read, update, delete: if isShopAdmin(shopId) || isPlatformAdmin();
+        allow create: if false;
+      }
+    }
+
+    match /{path=**}/bookings/{bookingId} {
+      allow read: if isPlatformAdmin() ||
+        (
+          isAuthenticated() &&
+          resource.data.clientUid == request.auth.uid
+        );
+    }
+  }
+}

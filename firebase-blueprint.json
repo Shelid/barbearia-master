@@ -1,0 +1,203 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "client"] },
+        "barbershopId": { "type": "string", "description": "Associated barbershop ID for admins" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Barbershop": {
+      "title": "Barbershop",
+      "description": "Barbershop core information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "slug": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "region": { "type": "string", "description": "Comunidade Autónoma (ex: Asturias)" },
+        "city": { "type": "string" },
+        "address": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "plan": { "type": "string", "enum": ["starter", "pro", "business"] },
+        "active": { "type": "boolean" },
+        "cancelationPolicyHours": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["slug", "name", "region", "city", "active"]
+    },
+    "Barber": {
+      "title": "Barber",
+      "description": "Staff member at a barbershop",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "barbershopId": { "type": "string" },
+        "name": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "bio": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["barbershopId", "name", "active"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Service offered by a barbershop",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "barbershopId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "durationMin": { "type": "number" },
+        "active": { "type": "boolean" },
+        "featured": { "type": "boolean" }
+      },
+      "required": ["barbershopId", "name", "price", "durationMin", "active"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Appointment record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "barbershopId": { "type": "string" },
+        "barberId": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "clientUid": { "type": "string" },
+        "clientName": { "type": "string" },
+        "clientPhone": { "type": "string" },
+        "clientEmail": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "completed"] },
+        "reminderChannel": { "type": "string", "enum": ["whatsapp", "email"] },
+        "prePaid": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["barbershopId", "barberId", "serviceId", "clientName", "date", "startTime", "status"]
+    },
+    "BarbershopHours": {
+      "title": "BarbershopHours",
+      "description": "Weekly opening hours",
+      "type": "object",
+      "properties": {
+        "dayOfWeek": { "type": "number", "description": "0=Sun, 6=Sat" },
+        "openTime": { "type": "string", "description": "HH:MM" },
+        "closeTime": { "type": "string", "description": "HH:MM" },
+        "breakStart": { "type": "string", "description": "HH:MM" },
+        "breakEnd": { "type": "string", "description": "HH:MM" },
+        "closed": { "type": "boolean" }
+      },
+      "required": ["dayOfWeek", "closed"]
+    },
+    "BarbershopClosure": {
+      "title": "BarbershopClosure",
+      "description": "Vacation or holiday closures",
+      "type": "object",
+      "properties": {
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "reason": { "type": "string" },
+        "notifyClients": { "type": "boolean" }
+      },
+      "required": ["startDate", "endDate"]
+    },
+    "AvailabilityOverride": {
+      "title": "AvailabilityOverride",
+      "description": "Specific slot blocks for a barber",
+      "type": "object",
+      "properties": {
+        "barberId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "reason": { "type": "string" }
+      },
+      "required": ["barberId", "date", "startTime", "endTime"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer review",
+      "type": "object",
+      "properties": {
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "clientName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["rating", "createdAt"]
+    },
+    "Waitlist": {
+      "title": "Waitlist",
+      "description": "Waitlist for fully booked days",
+      "type": "object",
+      "properties": {
+        "barberId": { "type": "string" },
+        "clientName": { "type": "string" },
+        "clientPhone": { "type": "string" },
+        "preferredDate": { "type": "string", "format": "date" },
+        "notifiedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientName", "preferredDate"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/barbershops/{shopId}": {
+      "schema": "Barbershop",
+      "description": "Barbershop details"
+    },
+    "/barbershops/{shopId}/hours/{dayId}": {
+      "schema": "BarbershopHours",
+      "description": "Weekly hours"
+    },
+    "/barbershops/{shopId}/closures/{closureId}": {
+      "schema": "BarbershopClosure",
+      "description": "Vacation periods"
+    },
+    "/barbershops/{shopId}/barbers/{barberId}": {
+      "schema": "Barber",
+      "description": "Staff members"
+    },
+    "/barbershops/{shopId}/overrides/{overrideId}": {
+      "schema": "AvailabilityOverride",
+      "description": "Specific blocks"
+    },
+    "/barbershops/{shopId}/services/{serviceId}": {
+      "schema": "Service",
+      "description": "Services offered"
+    },
+    "/barbershops/{shopId}/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Appointments"
+    },
+    "/barbershops/{shopId}/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Customer reviews"
+    },
+    "/barbershops/{shopId}/waitlist/{waitlistId}": {
+      "schema": "Waitlist",
+      "description": "Waitlist entries"
+    }
+  }
+}
