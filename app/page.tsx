@@ -154,35 +154,36 @@ export default function LandingPage() {
 
       <main className="flex-1 pt-16">
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] md:h-[95vh] flex items-center overflow-hidden">
+        <section className="relative min-h-[100vh] md:min-h-[100vh] flex items-end overflow-visible pb-32 md:pb-36">
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
             <img 
               src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070&auto=format&fit=crop" 
               alt="Barbershop Atmosphere" 
-              className="w-full h-full object-cover object-center scale-105"
+              className="w-full h-full object-cover scale-105"
+              style={{ objectPosition: '60% 30%' }}
             />
           </div>
           
-          <div className="container mx-auto px-4 relative z-20 flex flex-col justify-center pointer-events-none">
+          <div className="container mx-auto px-4 relative z-20 flex flex-col justify-end pointer-events-none">
             <motion.div 
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="max-w-4xl pointer-events-auto"
             >
-              <Badge className="mb-6 py-1.5 px-4 text-sm font-medium bg-transparent text-white border border-white/40 shadow-sm backdrop-blur-none">
+              <Badge className="mb-4 py-1.5 px-4 text-sm font-medium bg-transparent text-white border border-white/40 shadow-sm backdrop-blur-none">
                 #1 Plataforma de Barberías en España
               </Badge>
-              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-white font-bold leading-[1.1] md:leading-[1] mb-8 tracking-tighter">
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-white font-bold leading-[1.1] md:leading-[1] mb-5 tracking-tighter">
                 La Central Digital de <br/>
                 <span className="text-white italic">Barberías</span> en España
               </h1>
-              <p className="text-base md:text-lg text-white/80 mb-10 max-w-xl leading-relaxed">
+              <p className="text-base md:text-lg text-white/80 mb-6 max-w-xl leading-relaxed">
                 Gestionamos la conexión entre los mejores barberos y clientes de toda España. Encuentra tu estilo o haz crecer tu negocio hoy mismo.
               </p>
               
-              <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-2">
                 <div className="flex flex-col gap-2 w-full sm:w-auto relative z-30">
                   <span className="text-xs font-bold uppercase tracking-widest text-white/60 ml-1">Para el Cliente</span>
                   <a href="#regions" className="relative z-30 h-16 px-10 flex items-center justify-center text-lg bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full w-full sm:w-auto pointer-events-auto cursor-pointer transition-all uppercase tracking-wide font-bold">
@@ -206,7 +207,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="mt-16 flex items-center gap-8 text-white/40">
+              <div className="mt-8 md:mt-12 flex items-center gap-6 md:gap-8 text-white/40">
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold text-white tracking-tight">+500</span>
                   <span className="text-xs uppercase tracking-tighter">Barberías</span>
@@ -227,13 +228,13 @@ export default function LandingPage() {
         </section>
 
         {/* Role Selection Section - Clear distinction requested by user */}
-        <section className="py-20 bg-background relative z-30 -mt-10">
+        <section className="py-20 bg-background relative z-30">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Client Area Card */}
               <motion.div 
                 whileHover={{ y: -5 }}
-                className="relative group overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-muted/50 to-background p-8 md:p-12 shadow-sm transition-all hover:shadow-xl hover:border-primary/20"
+                className="relative group rounded-3xl border border-border bg-gradient-to-br from-muted/50 to-background p-8 md:p-12 shadow-sm transition-all hover:shadow-xl hover:border-primary/20"
               >
                 <div className="flex flex-col h-full">
                   <Badge variant="outline" className="w-fit mb-6 border-primary/20 text-primary">Para el público</Badge>
@@ -241,7 +242,7 @@ export default function LandingPage() {
                   <p className="text-muted-foreground mb-10 text-lg leading-relaxed max-w-md">
                     Descubre las mejores barberías de tu ciudad, consulta horarios en tiempo real y reserva tu cita en 3 clicks. Sin llamadas ni esperas.
                   </p>
-                  <div className="mt-auto relative z-20 flex flex-col sm:flex-row gap-3">
+                  <div className="mt-auto relative z-20 flex flex-col sm:flex-row flex-wrap gap-3">
                     <a href="#regions" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full px-8 h-14 text-sm uppercase tracking-wide font-bold pointer-events-auto cursor-pointer relative z-20 transition-all")}>
                       Buscar Barberías Locales
                     </a>
@@ -255,14 +256,14 @@ export default function LandingPage() {
                       </Button>
                     )}
                   </div>
-                  <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors pointer-events-none z-0" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors pointer-events-none z-0" style={{ right: '-5rem', top: '-5rem' }} />
                 </div>
               </motion.div>
 
               {/* Barber Area Card */}
               <motion.div 
                 whileHover={{ y: -5 }}
-                className="relative group overflow-hidden rounded-3xl border border-border bg-slate-950 p-8 md:p-12 shadow-sm transition-all hover:shadow-xl dark"
+                className="relative group rounded-3xl border border-border bg-slate-950 p-8 md:p-12 shadow-sm transition-all hover:shadow-xl dark"
               >
                 <div className="flex flex-col h-full text-white relative z-10 pointer-events-none">
                   <Badge variant="outline" className="w-fit mb-6 border-white/20 text-white/60 pointer-events-auto">Para profesionales</Badge>
@@ -270,7 +271,7 @@ export default function LandingPage() {
                   <p className="text-white/60 mb-10 text-lg leading-relaxed max-w-md pointer-events-auto">
                     Lleva tu barbería al siguiente nivel. Gestiona tu agenda, controla tus ingresos y fideliza a tus clientes con nuestra plataforma 360º.
                   </p>
-                  <div className="mt-auto flex flex-col sm:flex-row gap-4 relative z-20 pointer-events-auto">
+                  <div className="mt-auto flex flex-col sm:flex-row flex-wrap gap-4 relative z-20 pointer-events-auto">
                     <Link href="/register" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full px-8 h-14 text-sm uppercase tracking-wide font-bold pointer-events-auto cursor-pointer relative z-20 transition-all")}>
                       Registrar mi Barbería
                     </Link>
@@ -278,7 +279,7 @@ export default function LandingPage() {
                       Acceder al Panel
                     </Link>
                   </div>
-                  <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none z-0" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none z-0" style={{ right: '-5rem', top: '-5rem' }} />
                 </div>
               </motion.div>
             </div>
