@@ -248,47 +248,6 @@ export default function Dashboard() {
             setClosures(closuresSnap.docs.map((currentDoc) => currentDoc.data()));
             setOverrides(overridesSnap.docs.map((currentDoc) => currentDoc.data()));
             setLoading(false);
-            return;
-
-            // Fetch Shop
-            const shopDoc = await getDoc(doc(db, 'barbershops', userData.barbershopId));
-            if (shopDoc.exists()) {
-              setShop({ id: shopDoc.id, ...shopDoc.data() });
-              setAutoAcceptEnabled(!!shopDoc.data()?.autoAcceptEnabled);
-            }
-
-            setShopId(userData.barbershopId);
-
-            const barbersUnsub = () => undefined;
-
-            const servicesUnsub = () => undefined;
-
-            // Fetch Hours
-            const hoursUnsub = onSnapshot(collection(db, 'barbershops', userData.barbershopId, 'hours'), (snapshot) => {
-              const hoursData = snapshot.docs.map(doc => doc.data());
-              const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-              const completeHours = DAYS.map((day, i) => {
-                const h = hoursData.find((hd: any) => hd.dayOfWeek === i);
-                return {
-                  day,
-                  open: h ? (h.closed ? 'Cerrado' : `${h.openTime} - ${h.closeTime}`) : 'Cerrado'
-                };
-              });
-              setHours(completeHours);
-            });
-
-            const closuresUnsub = () => undefined;
-
-            const overridesUnsub = () => undefined;
-
-            setLoading(false);
-            return () => {
-              barbersUnsub();
-              servicesUnsub();
-              hoursUnsub();
-              closuresUnsub();
-              overridesUnsub();
-            };
           } else {
             setLoading(false);
           }

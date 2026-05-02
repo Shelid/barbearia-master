@@ -287,7 +287,7 @@ export default function ReportsPage() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 13, fill: '#64748B', fontWeight: 500 }} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px 20px', fontWeight: 'bold' }}
-                  formatter={(value: number) => [`${value}€`, 'Ingresos']}
+                  formatter={(value) => [`${value}€`, 'Ingresos']}
                 />
                 <Line 
                   type="monotone" 
