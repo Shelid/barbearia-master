@@ -111,7 +111,7 @@ export default function LandingPage() {
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
               <Scissors className="text-primary-foreground w-6 h-6" />
             </div>
-            <span className="font-display text-2xl font-bold tracking-tight">BarberFlow</span>
+            <span className="font-display text-base sm:text-2xl font-bold tracking-tight">BarberFlow</span>
           </Link>
           <nav className="hidden lg:flex items-center gap-8">
             <Link href="#regions" className="text-sm font-medium hover:text-primary transition-colors">
@@ -122,24 +122,24 @@ export default function LandingPage() {
             </Link>
           </nav>
           
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="flex gap-1.5 sm:gap-2">
               {user ? (
-                <Link href="/client" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full uppercase tracking-wider font-bold text-[10px] sm:text-xs px-2 sm:px-6 transition-all flex items-center gap-1 sm:gap-1.5")}>
-                  <Calendar className="w-3.5 h-3.5 sm:hidden" />
+                <Link href="/client" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full uppercase tracking-wider font-bold text-[9px] sm:text-xs px-2 sm:px-6 transition-all flex items-center gap-1 sm:gap-1.5")}>
+                  <Calendar className="w-3 h-3 sm:hidden" />
                   <span className="hidden sm:inline">Mis Reservas</span>
                   <span className="sm:hidden">Reservas</span>
                 </Link>
               ) : (
-                <Button onClick={handleClientLogin} variant="outline" size="sm" className="bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full uppercase tracking-wider font-bold text-[10px] sm:text-xs px-2 sm:px-6 transition-all flex items-center gap-1 sm:gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 sm:hidden" />
+                <Button onClick={handleClientLogin} variant="outline" size="sm" className="bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full uppercase tracking-wider font-bold text-[9px] sm:text-xs px-2 sm:px-6 transition-all flex items-center gap-1 sm:gap-1.5">
+                  <Calendar className="w-3 h-3 sm:hidden" />
                   <span className="hidden sm:inline">Mis Reservas</span>
                   <span className="sm:hidden">Reservas</span>
                 </Button>
               )}
               {user && profile?.role !== 'client' && (
-                <Link href="/admin" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full uppercase tracking-wider font-bold text-[10px] sm:text-xs px-2 sm:px-6 transition-all flex items-center gap-1 sm:gap-1.5")}>
-                  <LayoutDashboard className="w-3.5 h-3.5 sm:hidden" />
+                <Link href="/admin" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white rounded-full uppercase tracking-wider font-bold text-[9px] sm:text-xs px-2 sm:px-6 transition-all flex items-center gap-1 sm:gap-1.5")}>
+                  <LayoutDashboard className="w-3 h-3 sm:hidden" />
                   <span className="hidden sm:inline">Panel para Profesional</span>
                   <span className="sm:hidden">Panel</span>
                 </Link>
@@ -154,7 +154,7 @@ export default function LandingPage() {
 
       <main className="flex-1 pt-16">
         {/* Hero Section */}
-        <section className="relative min-h-[100vh] md:min-h-[100vh] flex items-end overflow-visible pb-32 md:pb-36">
+        <section className="relative min-h-[100vh] md:min-h-[100vh] flex items-end overflow-hidden pb-32 md:pb-36">
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
             <img 
@@ -172,11 +172,11 @@ export default function LandingPage() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="max-w-4xl pointer-events-auto"
             >
-              <Badge className="mb-4 py-1.5 px-4 text-sm font-medium bg-transparent text-white border border-white/40 shadow-sm backdrop-blur-none">
+              <Badge className="mb-4 py-1 px-3 text-[10px] sm:text-sm font-medium bg-transparent text-white border border-white/40 shadow-sm backdrop-blur-none whitespace-nowrap">
                 #1 Plataforma de Barberías en España
               </Badge>
-              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-white font-bold leading-[1.1] md:leading-[1] mb-5 tracking-tighter">
-                La Central Digital de <br/>
+              <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-white font-bold leading-[1.1] md:leading-[1] mb-5 tracking-tighter">
+                La Central Digital de <span className="hidden md:inline"><br/></span>
                 <span className="text-white italic">Barberías</span> en España
               </h1>
               <p className="text-base md:text-lg text-white/80 mb-6 max-w-xl leading-relaxed">
@@ -186,7 +186,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-2">
                 <div className="flex flex-col gap-2 w-full sm:w-auto relative z-30">
                   <span className="text-xs font-bold uppercase tracking-widest text-white/60 ml-1">Para el Cliente</span>
-                  <a href="#regions" className="relative z-30 h-16 px-10 flex items-center justify-center text-lg bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full w-full sm:w-auto pointer-events-auto cursor-pointer transition-all uppercase tracking-wide font-bold">
+                  <a href="#regions" className="relative z-30 h-14 md:h-16 px-6 md:px-10 flex items-center justify-center text-base md:text-lg bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full w-full sm:w-auto pointer-events-auto cursor-pointer transition-all uppercase tracking-wide font-bold">
                     Buscar Barbería <ChevronRight className="ml-2 w-5 h-5" />
                   </a>
                 </div>
@@ -200,14 +200,14 @@ export default function LandingPage() {
                       Ir al Panel <ChevronRight className="ml-2 w-5 h-5" />
                     </Link>
                   ) : (
-                    <Link href="/login" className="relative z-30 h-16 px-10 flex items-center justify-center text-lg bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full w-full sm:w-auto pointer-events-auto cursor-pointer transition-all uppercase tracking-wide font-bold">
+                    <Link href="/login" className="relative z-30 h-14 md:h-16 px-6 md:px-10 flex items-center justify-center text-base md:text-lg bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full w-full sm:w-auto pointer-events-auto cursor-pointer transition-all uppercase tracking-wide font-bold">
                       Acceso Profesionales <ChevronRight className="ml-2 w-5 h-5" />
                     </Link>
                   )}
                 </div>
               </div>
 
-              <div className="mt-8 md:mt-12 flex items-center gap-6 md:gap-8 text-white/40">
+              <div className="mt-8 md:mt-12 flex items-center justify-between sm:justify-start gap-3 md:gap-8 text-white/40 w-full sm:w-auto">
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold text-white tracking-tight">+500</span>
                   <span className="text-xs uppercase tracking-tighter">Barberías</span>
@@ -234,12 +234,12 @@ export default function LandingPage() {
               {/* Client Area Card */}
               <motion.div 
                 whileHover={{ y: -5 }}
-                className="relative group rounded-3xl border border-border bg-gradient-to-br from-muted/50 to-background p-8 md:p-12 shadow-sm transition-all hover:shadow-xl hover:border-primary/20"
+                className="relative group rounded-3xl border border-border bg-gradient-to-br from-muted/50 to-background p-8 md:p-12 shadow-sm transition-all hover:shadow-xl hover:border-primary/20 overflow-hidden"
               >
                 <div className="flex flex-col h-full">
                   <Badge variant="outline" className="w-fit mb-6 border-primary/20 text-primary">Para el público</Badge>
-                  <h3 className="text-3xl md:text-4xl font-display font-bold mb-4">Área del Cliente</h3>
-                  <p className="text-muted-foreground mb-10 text-lg leading-relaxed max-w-md">
+                  <h3 className="text-2xl md:text-4xl font-display font-bold mb-4">Área del Cliente</h3>
+                  <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed max-w-md">
                     Descubre las mejores barberías de tu ciudad, consulta horarios en tiempo real y reserva tu cita en 3 clicks. Sin llamadas ni esperas.
                   </p>
                   <div className="mt-auto relative z-20 flex flex-col sm:flex-row flex-wrap gap-3">
@@ -263,12 +263,12 @@ export default function LandingPage() {
               {/* Barber Area Card */}
               <motion.div 
                 whileHover={{ y: -5 }}
-                className="relative group rounded-3xl border border-border bg-slate-950 p-8 md:p-12 shadow-sm transition-all hover:shadow-xl dark"
+                className="relative group rounded-3xl border border-border bg-slate-950 p-8 md:p-12 shadow-sm transition-all hover:shadow-xl dark overflow-hidden"
               >
                 <div className="flex flex-col h-full text-white relative z-10 pointer-events-none">
                   <Badge variant="outline" className="w-fit mb-6 border-white/20 text-white/60 pointer-events-auto">Para profesionales</Badge>
-                  <h3 className="text-3xl md:text-4xl font-display font-bold mb-4 pointer-events-auto">Área del Barbero</h3>
-                  <p className="text-white/60 mb-10 text-lg leading-relaxed max-w-md pointer-events-auto">
+                  <h3 className="text-2xl md:text-4xl font-display font-bold mb-4 pointer-events-auto">Área del Barbero</h3>
+                  <p className="text-white/60 mb-10 text-base md:text-lg leading-relaxed max-w-md pointer-events-auto">
                     Lleva tu barbería al siguiente nivel. Gestiona tu agenda, controla tus ingresos y fideliza a tus clientes con nuestra plataforma 360º.
                   </p>
                   <div className="mt-auto flex flex-col sm:flex-row flex-wrap gap-4 relative z-20 pointer-events-auto">
@@ -291,14 +291,14 @@ export default function LandingPage() {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
               <div>
-                <h2 className="font-display text-4xl font-bold mb-4">Explora por Comunidad</h2>
+                <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Explora por Comunidad</h2>
               </div>
               <Link href="/regiones" className={cn(buttonVariants({ variant: 'link' }), "group")}>
                 Ver todas las regiones <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {activeRegions.slice(0, 4).map((region, index) => (
                 <motion.div
                   key={region.slug}
