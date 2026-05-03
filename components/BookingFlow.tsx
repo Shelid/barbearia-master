@@ -15,7 +15,7 @@ import { es } from 'date-fns/locale';
 
 import { db, auth, getAppCheckTokenForBackend } from '@/lib/firebase';
 import { collection, getDocs, query, where, writeBatch, doc, getDoc, setDoc } from 'firebase/firestore';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { toast } from 'sonner';
 
 interface BookingFlowProps {
@@ -175,6 +175,13 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
       try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
+        
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         
@@ -198,6 +205,16 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
     }
 
     try {
+      let clientPhone = '';
+      let clientPhotoUrl = '';
+      if (currentUser?.uid) {
+        const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (uDoc.exists()) {
+          clientPhone = uDoc.data().phone || '';
+          clientPhotoUrl = uDoc.data().photoUrl || '';
+        }
+      }
+
       const bookingData = {
         barbershopId: shopId,
         barberId: selectedBarber.id,
@@ -208,6 +225,8 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
         clientUid: currentUser.uid,
         clientName: currentUser.displayName || 'Cliente',
         clientEmail: currentUser.email || '',
+        clientPhone: clientPhone,
+        clientPhotoUrl: clientPhotoUrl,
         date: format(selectedDate, 'yyyy-MM-dd'),
         startTime: selectedSlot,
         status: 'pending',

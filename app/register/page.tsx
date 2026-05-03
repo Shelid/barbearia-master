@@ -7,11 +7,18 @@ import { Scissors, Mail, Lock, Store, MapPin, ArrowRight, Check } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth, db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, query, collection, where } from 'firebase/firestore';
 import { toast } from 'sonner';
+import {
+  getSpainMunicipalitiesForRegion,
+  getSpainRegionByName,
+  isSpainMunicipalityInRegion,
+  SPAIN_REGIONS,
+} from '@/lib/spain-locations';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -25,12 +32,28 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const selectedRegion = getSpainRegionByName(formData.region);
+  const availableMunicipalities = selectedRegion?.municipalities ?? [];
+  const selectedCity =
+    formData.city && selectedRegion && isSpainMunicipalityInRegion(selectedRegion.name, formData.city)
+      ? formData.city
+      : '';
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     if (step === 1) {
       setStep(2);
+      return;
+    }
+
+    if (!selectedRegion) {
+      toast.error('Selecciona una comunidad/provincia valida.');
+      return;
+    }
+
+    if (!formData.city || !isSpainMunicipalityInRegion(selectedRegion.name, formData.city)) {
+      toast.error('Selecciona una ciudad valida para la comunidad/provincia elegida.');
       return;
     }
 
@@ -76,7 +99,7 @@ export default function RegisterPage() {
         return;
       }
 
-      const regionSlug = slugify(formData.region);
+      const regionSlug = selectedRegion.slug;
       const citySlug = slugify(formData.city);
 
       // Create shop doc
@@ -86,7 +109,7 @@ export default function RegisterPage() {
         slug,
         ownerUid: user.uid, // Track ownership for future deletion/admin tools
         name: formData.shopName,
-        region: formData.region,
+        region: selectedRegion.name,
         regionSlug,
         city: formData.city,
         citySlug,
@@ -250,27 +273,50 @@ export default function RegisterPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="region">Comunidad Autónoma</Label>
-                    <Input 
-                      id="region" 
-                      placeholder="Asturias" 
-                      className="h-12"
-                      value={formData.region}
-                      onChange={(e) => setFormData({...formData, region: e.target.value})}
-                      required
-                    />
+                    <Select
+                      value={selectedRegion?.name ?? ''}
+                      onValueChange={(value) => {
+                        const nextRegion = value ?? '';
+                        const nextMunicipalities = getSpainMunicipalitiesForRegion(nextRegion);
+                        setFormData({
+                          ...formData,
+                          region: nextRegion,
+                          city: nextMunicipalities.includes(formData.city) ? formData.city : '',
+                        });
+                      }}
+                    >
+                      <SelectTrigger id="region" className="h-12 w-full">
+                        <SelectValue placeholder="Selecciona una comunidad" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {SPAIN_REGIONS.map((region) => (
+                          <SelectItem key={region.code} value={region.name}>
+                            {region.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="city">Ciudad / Localidad</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input 
-                        id="city" 
-                        placeholder="Oviedo" 
-                        className="pl-10 h-12"
-                        value={formData.city}
-                        onChange={(e) => setFormData({...formData, city: e.target.value})}
-                        required
-                      />
+                      <Select
+                        value={selectedCity}
+                        onValueChange={(value) => setFormData({ ...formData, city: value ?? '' })}
+                        disabled={!selectedRegion}
+                      >
+                        <SelectTrigger id="city" className="h-12 w-full pl-10">
+                          <SelectValue placeholder={selectedRegion ? 'Selecciona una ciudad' : 'Selecciona primero la comunidad'} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {availableMunicipalities.map((municipality) => (
+                            <SelectItem key={municipality} value={municipality}>
+                              {municipality}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </>

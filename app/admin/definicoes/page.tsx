@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -43,6 +44,12 @@ import {
 } from '@/lib/geo';
 import { collection, doc, getDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { toast } from 'sonner';
+import {
+  getSpainMunicipalitiesForRegion,
+  getSpainRegionByName,
+  isSpainMunicipalityInRegion,
+  SPAIN_REGIONS,
+} from '@/lib/spain-locations';
 
 type ShopSettings = {
   id: string;
@@ -100,6 +107,12 @@ export default function SettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const selectedRegion = shop?.region ? getSpainRegionByName(shop.region) : undefined;
+  const availableMunicipalities = selectedRegion?.municipalities ?? [];
+  const selectedCity =
+    shop?.city && selectedRegion && isSpainMunicipalityInRegion(selectedRegion.name, shop.city)
+      ? shop.city
+      : '';
 
   useEffect(() => {
     if (!profile?.barbershopId) return;
@@ -120,6 +133,19 @@ export default function SettingsPage() {
     if (!shop) return;
 
     setSaving(true);
+
+    const validRegion = getSpainRegionByName(shop.region || '');
+    if (!validRegion) {
+      toast.error('Selecciona una comunidad/provincia valida.');
+      setSaving(false);
+      return;
+    }
+
+    if (!shop.city || !isSpainMunicipalityInRegion(validRegion.name, shop.city)) {
+      toast.error('Selecciona una ciudad valida para la comunidad/provincia elegida.');
+      setSaving(false);
+      return;
+    }
 
     const slugify = (text: string) =>
       text
@@ -153,9 +179,10 @@ export default function SettingsPage() {
 
     const updatedShop = {
       ...shop,
+      region: validRegion.name,
       address: shop.address?.trim() || '',
       locationReference: shop.locationReference?.trim() || '',
-      regionSlug: shop.region ? slugify(shop.region) : '',
+      regionSlug: validRegion.slug,
       citySlug: shop.city ? slugify(shop.city) : '',
       ...createShopGeoFields(latitude, longitude),
     };
@@ -515,23 +542,48 @@ export default function SettingsPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="region" className="font-bold text-slate-700">Comunidad / Provincia</Label>
-                        <Input
-                          id="region"
-                          placeholder="Ej: Asturias"
-                          value={shop.region || ''}
-                          className="h-11 rounded-xl border-slate-200 bg-slate-50 focus-visible:ring-emerald-500"
-                          onChange={(e) => setShop({ ...shop, region: e.target.value })}
-                        />
+                        <Select
+                          value={selectedRegion?.name ?? ''}
+                          onValueChange={(value) => {
+                            const nextRegion = value ?? '';
+                            const nextMunicipalities = getSpainMunicipalitiesForRegion(nextRegion);
+                            setShop({
+                              ...shop,
+                              region: nextRegion,
+                              city: shop.city && nextMunicipalities.includes(shop.city) ? shop.city : '',
+                            });
+                          }}
+                        >
+                          <SelectTrigger id="region" className="h-11 w-full rounded-xl border-slate-200 bg-slate-50 focus-visible:ring-emerald-500">
+                            <SelectValue placeholder="Selecciona una comunidad/provincia" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-72 rounded-xl">
+                            {SPAIN_REGIONS.map((region) => (
+                              <SelectItem key={region.code} value={region.name}>
+                                {region.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="city" className="font-bold text-slate-700">Ciudad</Label>
-                        <Input
-                          id="city"
-                          placeholder="Ej: Mieres"
-                          value={shop.city || ''}
-                          className="h-11 rounded-xl border-slate-200 bg-slate-50 focus-visible:ring-emerald-500"
-                          onChange={(e) => setShop({ ...shop, city: e.target.value })}
-                        />
+                        <Select
+                          value={selectedCity}
+                          onValueChange={(value) => setShop({ ...shop, city: value ?? '' })}
+                          disabled={!selectedRegion}
+                        >
+                          <SelectTrigger id="city" className="h-11 w-full rounded-xl border-slate-200 bg-slate-50 focus-visible:ring-emerald-500">
+                            <SelectValue placeholder={selectedRegion ? 'Selecciona una ciudad' : 'Selecciona primero la comunidad'} />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-72 rounded-xl">
+                            {availableMunicipalities.map((municipality) => (
+                              <SelectItem key={municipality} value={municipality}>
+                                {municipality}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="address" className="font-bold text-slate-700">Direccion completa</Label>

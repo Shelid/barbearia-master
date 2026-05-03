@@ -8,9 +8,10 @@ import RegionView from './RegionView';
 import ShopView from './ShopView';
 
 const KNOWN_REGIONS = [
-  'andalucia', 'aragon', 'asturias', 'baleares', 'canarias', 'cantabria', 
+  'andalucia', 'aragon', 'asturias', 'baleares', 'islas-baleares', 'canarias', 'cantabria', 
   'castilla-la-mancha', 'castilla-y-leon', 'cataluna', 'comunidad-valenciana', 
-  'extremadura', 'galicia', 'madrid', 'murcia', 'navarra', 'pais-vasco', 'la-rioja'
+  'extremadura', 'galicia', 'madrid', 'murcia', 'navarra', 'pais-vasco', 'la-rioja',
+  'ceuta', 'melilla'
 ];
 
 export default function DynamicSlugPage() {

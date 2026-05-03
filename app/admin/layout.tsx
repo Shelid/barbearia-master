@@ -58,7 +58,7 @@ type PendingBooking = {
 
 function SidebarContent({ pathname, userEmail, onLogout }: { pathname: string; userEmail?: string; onLogout: () => void }) {
   return (
-    <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-200">
+    <div className="flex flex-col h-full bg-slate-100 border-r border-slate-200">
       <div className="p-6 flex items-center gap-3">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
@@ -122,15 +122,15 @@ function SidebarContent({ pathname, userEmail, onLogout }: { pathname: string; u
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-200 mt-auto">
         <DropdownMenu>
-          <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost" }), "w-full justify-start gap-3 px-3 h-12 hover:bg-slate-200/50 rounded-xl")}>
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-              <UserIcon className="w-4 h-4 text-slate-600" />
+          <DropdownMenuTrigger className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-slate-200/50 transition-colors outline-none overflow-hidden cursor-pointer">
+            <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center shrink-0 shadow-sm">
+              <UserIcon className="w-5 h-5 text-slate-600" />
             </div>
-            <div className="flex flex-col items-start truncate h-auto py-1">
-              <span className="text-sm font-bold text-slate-800 leading-none">Administrador</span>
-              <span className="text-xs text-slate-500 font-medium truncate w-[130px] leading-tight pt-1">
+            <div className="flex flex-col items-start min-w-0 flex-1">
+              <span className="text-sm font-bold text-slate-800 truncate w-full text-left">Administrador</span>
+              <span className="text-[11px] text-slate-500 font-medium truncate w-full text-left">
                 {userEmail || 'Cuenta'}
               </span>
             </div>

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +24,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let cancelled = false;
+
+    // Process redirect results for mobile logins
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        try {
+          const userRef = doc(db, 'users', result.user.uid);
+          const userDoc = await getDoc(userRef);
+          if (!userDoc.exists()) {
+            await setDoc(userRef, {
+              uid: result.user.uid,
+              email: result.user.email,
+              role: 'client',
+              displayName: result.user.displayName || '',
+              createdAt: new Date().toISOString(),
+            });
+          }
+        } catch (e) {
+          console.error('Error creating user doc from redirect:', e);
+        }
+      }
+    }).catch((error) => {
+      console.error('Redirect result error:', error);
+    });
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (nextUser) => {
       setUser(nextUser);

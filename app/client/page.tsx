@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { collectionGroup, getDocs, query, where, doc, updateDoc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { Calendar, Clock, MapPin, Scissors, Star, CheckCircle2, ChevronRight, MessageCircle, XCircle } from 'lucide-react';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { Calendar, Clock, MapPin, Scissors, Star, CheckCircle2, ChevronRight, MessageCircle, XCircle, Settings, Upload, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,11 @@ export default function ClientDashboard() {
   const [comment, setComment] = useState('');
   const [profileName, setProfileName] = useState('');
   const [profileBirthdate, setProfileBirthdate] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [cancelBookingDialog, setCancelBookingDialog] = useState<any | null>(null);
 
   const canCancel = (booking: any) => {
@@ -70,6 +74,13 @@ export default function ClientDashboard() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
+      
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      
       const result = await signInWithPopup(auth, provider);
       
       const userRef = doc(db, 'users', result.user.uid);
@@ -121,10 +132,10 @@ export default function ClientDashboard() {
           if (userDoc.exists()) {
             const data = userDoc.data();
             setUserData({ id: userDoc.id, ...data });
-            if (!data.birthdate) {
-              setProfileName(data.displayName || '');
-              setProfilePhotoUrl(data.photoUrl || '');
-            }
+            setProfileName(data.displayName || '');
+            setProfilePhotoUrl(data.photoUrl || '');
+            setProfilePhone(data.phone || '');
+            setProfileBirthdate(data.birthdate || '');
           } else {
             setUserData(null);
           }
@@ -161,24 +172,84 @@ export default function ClientDashboard() {
     };
   }, []);
 
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = error => reject(error);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecciona un archivo de imagen válido.');
+      return;
+    }
+    
+    try {
+      setIsUploadingPhoto(true);
+      const base64 = await resizeImage(file);
+      setProfilePhotoUrl(base64);
+    } catch (error) {
+      toast.error('Error al procesar la imagen');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const handleCompleteProfile = async () => {
-    if (!profileName || !profileBirthdate) {
-      toast.error('Por favor, rellena tu nombre y fecha de nacimiento.');
+    if (!profileName || !profileBirthdate || !profilePhone) {
+      toast.error('Por favor, rellena tu nombre, fecha de nacimiento y teléfono.');
       return;
     }
     try {
       await updateDoc(doc(db, 'users', auth.currentUser!.uid), {
         displayName: profileName,
         birthdate: profileBirthdate,
+        phone: profilePhone,
         photoUrl: profilePhotoUrl
       });
       setUserData((current: any) => current ? ({
         ...current,
         displayName: profileName,
         birthdate: profileBirthdate,
+        phone: profilePhone,
         photoUrl: profilePhotoUrl
       }) : current);
-      toast.success('Perfil completado con éxito');
+      toast.success('Perfil actualizado con éxito');
+      setIsEditingProfile(false);
     } catch (error) {
       toast.error('Error al actualizar perfil');
     }
@@ -267,9 +338,14 @@ export default function ClientDashboard() {
       </header>
 
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold font-display tracking-tight">Mis Reservas</h1>
-          <p className="text-muted-foreground mt-1">Gestiona tus próximas citas y tu historial de estilo.</p>
+        <div className="mb-8 flex justify-between items-start sm:items-center">
+          <div>
+            <h1 className="text-3xl font-bold font-display tracking-tight">Mis Reservas</h1>
+            <p className="text-muted-foreground mt-1">Gestiona tus próximas citas y tu historial de estilo.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} className="gap-2 shrink-0">
+            <Settings className="w-4 h-4" /> <span className="hidden sm:inline">Configurar Perfil</span>
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -433,13 +509,20 @@ export default function ClientDashboard() {
         </DialogContent>
       </Dialog>
       
-      {/* Profile Completion Dialog */}
-      <Dialog open={userData && !userData.birthdate} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md [&>button]:hidden">
+      {/* Profile Completion/Edit Dialog */}
+      <Dialog 
+        open={(userData && (!userData.birthdate || !userData.phone)) || isEditingProfile} 
+        onOpenChange={(open) => {
+          if (!open && userData && userData.birthdate && userData.phone) {
+            setIsEditingProfile(false);
+          }
+        }}
+      >
+        <DialogContent className={(!userData?.birthdate || !userData?.phone) && !isEditingProfile ? "sm:max-w-md [&>button]:hidden" : "sm:max-w-md"}>
           <DialogHeader>
-            <DialogTitle>Completa tu perfil</DialogTitle>
+            <DialogTitle>{isEditingProfile && userData?.birthdate ? 'Configurar perfil' : 'Completa tu perfil'}</DialogTitle>
             <DialogDescription>
-              Para continuar y gestionar tus reservas, necesitamos algunos datos básicos.
+              {isEditingProfile && userData?.birthdate ? 'Actualiza tu información personal.' : 'Para continuar y gestionar tus reservas, necesitamos algunos datos básicos.'}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
@@ -452,13 +535,39 @@ export default function ClientDashboard() {
               <Input type="date" value={profileBirthdate} onChange={(e) => setProfileBirthdate(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Foto de perfil (URL) - Opcional</Label>
-              <Input value={profilePhotoUrl} onChange={(e) => setProfilePhotoUrl(e.target.value)} placeholder="https://..." />
-              {profilePhotoUrl && <img src={profilePhotoUrl} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2 mx-auto" />}
+              <Label>Teléfono *</Label>
+              <Input type="tel" value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="Ej. +34 600 000 000" />
+            </div>
+            <div className="space-y-2">
+              <Label>Foto de perfil (Opcional)</Label>
+              <div className="flex items-center gap-4">
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt="Preview" className="w-16 h-16 rounded-full object-cover border" />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                    <User className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploadingPhoto}>
+                  {isUploadingPhoto ? 'Subiendo...' : 'Cambiar foto'}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleCompleteProfile} className="w-full">Guardar y continuar</Button>
+            {isEditingProfile && userData?.birthdate && userData?.phone && (
+              <Button variant="ghost" onClick={() => setIsEditingProfile(false)}>Cancelar</Button>
+            )}
+            <Button onClick={handleCompleteProfile} className={isEditingProfile && userData?.birthdate ? "" : "w-full"}>
+              Guardar perfil
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

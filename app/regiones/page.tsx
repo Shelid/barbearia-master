@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, MapPin } from 'lucide-react';
 
-export const ALL_REGIONS = [
+const ALL_REGIONS = [
   { name: 'Andalucía', slug: 'andalucia' },
   { name: 'Aragón', slug: 'aragon' },
   { name: 'Asturias', slug: 'asturias' },
@@ -20,6 +20,8 @@ export const ALL_REGIONS = [
   { name: 'La Rioja', slug: 'la-rioja' },
   { name: 'País Vasco', slug: 'pais-vasco' },
   { name: 'Comunidad Valenciana', slug: 'comunidad-valenciana' },
+  { name: 'Ceuta', slug: 'ceuta' },
+  { name: 'Melilla', slug: 'melilla' },
 ];
 
 export default function RegionesPage() {

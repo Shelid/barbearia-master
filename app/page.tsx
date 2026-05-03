@@ -13,7 +13,7 @@ import { auth, db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { toast } from 'sonner';
 
 const DEFAULT_REGIONS = [
@@ -34,6 +34,13 @@ export default function LandingPage() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
+      
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      
       const result = await signInWithPopup(auth, provider);
       
       const userRef = doc(db, 'users', result.user.uid);
@@ -298,7 +305,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {activeRegions.slice(0, 4).map((region, index) => (
                 <motion.div
                   key={region.slug}

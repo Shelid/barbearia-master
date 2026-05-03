@@ -12,7 +12,10 @@ import {
   XCircle,
   Plus,
   ArrowRight,
-  Star
+  Star,
+  Phone,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,6 +66,7 @@ export default function Dashboard() {
   const [showAllBookings, setShowAllBookings] = React.useState(false);
   const [shopId, setShopId] = React.useState<string | null>(null);
   const [autoAcceptEnabled, setAutoAcceptEnabled] = React.useState(false);
+  const [statsVisible, setStatsVisible] = React.useState(false);
   
   const [statsDate, setStatsDate] = React.useState(() => format(new Date(), 'yyyy-MM-dd'));
 
@@ -439,20 +443,20 @@ export default function Dashboard() {
     }
   };
 
-  const { filteredBookings, uniqueClients, occupancyRate } = React.useMemo(() => {
+  const { filteredBookings, uniqueClients, occupancyRate, completedRevenue } = React.useMemo(() => {
     const filtered = bookings.filter(b => b.date === statsDate);
+    const activeFiltered = filtered.filter(b => b.status !== 'cancelled');
     
-    // Unique clients
-    const clients = new Set(filtered.map(b => b.clientUid !== 'manual' ? b.clientUid : `${b.clientName}-${b.startTime}`));
+    // Unique clients (excluding cancelled)
+    const clients = new Set(activeFiltered.map(b => b.clientUid !== 'manual' ? b.clientUid : `${b.clientName}-${b.startTime}`));
     
-    // Occupancy Rate
+    // Occupancy Rate (excluding cancelled)
     let occupancy = 0;
     if (hours.length && barbers.length) {
-      // Split statsDate (yyyy-MM-dd) to avoid timezone shift from new Date()
       const [y, m, d] = statsDate.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
       
-      const dayIndex = dateObj.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+      const dayIndex = dateObj.getDay();
       const dayConfig = hours[dayIndex];
       
       const isClosed = closures.some(c => c.startDate <= statsDate && c.endDate >= statsDate) || (dayConfig && dayConfig.open === 'Cerrado');
@@ -483,20 +487,25 @@ export default function Dashboard() {
         }
         
         if (totalSlots > 0) {
-          const bookedCount = filtered.filter(b => b.status !== 'cancelled').length;
+          const bookedCount = activeFiltered.length;
           occupancy = Math.min(100, Math.round((bookedCount / totalSlots) * 100));
         }
       }
     }
     
-    return { filteredBookings: filtered, uniqueClients: clients.size, occupancyRate: occupancy };
+    // Revenue: only completed bookings
+    const completedRevenue = filtered
+      .filter(b => b.status === 'completed')
+      .reduce((acc, b) => acc + (b.price || 0), 0);
+    
+    return { filteredBookings: filtered, uniqueClients: clients.size, occupancyRate: occupancy, completedRevenue };
   }, [bookings, statsDate, hours, barbers, closures]);
 
   const stats = [
-    { label: 'Citas', value: filteredBookings.length.toString(), trend: '', icon: CalendarIcon },
-    { label: 'Ingresos', value: `€${filteredBookings.reduce((acc, b) => acc + (b.price || 0), 0)}`, trend: '', icon: Scissors },
-    { label: 'Clientes', value: uniqueClients.toString(), trend: '', icon: User },
-    { label: 'Tasa ocupación', value: `${occupancyRate}%`, trend: '', icon: Clock },
+    { label: 'Citas', value: filteredBookings.filter(b => b.status !== 'cancelled').length.toString(), sensitive: true, icon: CalendarIcon },
+    { label: 'Ingresos', value: `€${completedRevenue}`, sensitive: true, icon: Scissors },
+    { label: 'Clientes', value: uniqueClients.toString(), sensitive: true, icon: User },
+    { label: 'Tasa ocupación', value: `${occupancyRate}%`, sensitive: true, icon: Clock },
   ];
 
   const displayedBookings = showAllBookings ? bookings : filteredBookings;
@@ -554,6 +563,14 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
         <h3 className="text-xl font-bold text-slate-800">Resumen de Actividad</h3>
         <div className="flex items-center gap-2 mt-2 sm:mt-0">
+          <button
+            onClick={() => setStatsVisible(v => !v)}
+            title={statsVisible ? 'Ocultar información sensible' : 'Mostrar información sensible'}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors text-xs font-semibold shadow-sm"
+          >
+            {statsVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {statsVisible ? 'Ocultar' : 'Mostrar'}
+          </button>
           <Input 
             type="date" 
             value={statsDate}
@@ -562,20 +579,19 @@ export default function Dashboard() {
           />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat, i) => (
-          <Card key={i} className="border border-slate-100 shadow-sm rounded-[24px] bg-white overflow-hidden transition-all hover:shadow-md hover:-translate-y-1 duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-slate-50 text-slate-900 rounded-[18px] flex items-center justify-center border border-slate-200/60 shadow-sm">
-                  <stat.icon className="w-5 h-5 opacity-80" />
+          <Card key={i} className="border border-slate-100 shadow-sm rounded-[20px] md:rounded-[24px] bg-white overflow-hidden transition-all hover:shadow-md hover:-translate-y-1 duration-300">
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-slate-50 text-slate-900 rounded-[12px] md:rounded-[18px] flex items-center justify-center border border-slate-200/60 shadow-sm">
+                  <stat.icon className="w-4 h-4 md:w-5 md:h-5 opacity-80" />
                 </div>
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-bold px-2.5 py-1 text-xs rounded-full shadow-sm">
-                  {stat.trend}
-                </Badge>
               </div>
-              <p className="text-sm text-slate-500 font-semibold mb-1">{stat.label}</p>
-              <h3 className="text-4xl font-display font-bold text-slate-800 tracking-tight">{stat.value}</h3>
+              <p className="text-[10px] md:text-sm text-slate-500 font-semibold mb-0.5 md:mb-1">{stat.label}</p>
+              <h3 className="text-2xl md:text-4xl font-display font-bold text-slate-800 tracking-tight">
+                {statsVisible ? stat.value : '••••'}
+              </h3>
             </CardContent>
           </Card>
         ))}
@@ -709,76 +725,112 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="p-8 pt-6">
             <div className="space-y-4">
-              {displayedBookings.length === 0 ? (
+              {displayedBookings.length === 0 && (
                 <div className="text-center py-16 border-2 border-dashed border-slate-100 rounded-[24px] bg-slate-50/50">
                   <CalendarIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                   <p className="text-slate-500 font-medium text-lg">No hay citas programadas para esta fecha.</p>
                 </div>
-              ) : (
-                displayedBookings.map((booking) => (
+              )}
+              {displayedBookings.length > 0 && displayedBookings.map((booking) => {
+                return (
                   <div 
                     key={booking.id} 
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-[24px] bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-md hover:border-slate-200 transition-all group gap-4 sm:gap-0"
+                    className="group relative p-4 md:p-6 rounded-[28px] bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300"
                   >
-                    <div className="flex items-center gap-5">
-                      <div className="w-16 h-16 bg-white rounded-[20px] flex flex-col items-center justify-center border border-slate-200 shadow-sm group-hover:border-slate-300 transition-colors shrink-0">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{format(new Date(booking.date), 'MMM d', { locale: es })}</span>
-                        <span className="text-lg font-black text-slate-800 leading-tight tracking-tight mt-0.5">{booking.startTime}</span>
+                    <div className="flex gap-4 md:gap-6">
+                      {/* Left: Avatar/Badge */}
+                      <div className="shrink-0">
+                        {booking.clientPhotoUrl ? (
+                          <div className="w-14 h-14 md:w-20 md:h-20 relative rounded-[18px] md:rounded-[24px] overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-100 group-hover:ring-emerald-100 transition-all">
+                            <img src={booking.clientPhotoUrl} alt={booking.clientName} className="w-full h-full object-cover" />
+                            <div className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 md:py-1 text-center backdrop-blur-[2px]">
+                              <span className="text-[7px] md:text-[9px] text-white/90 font-bold uppercase tracking-[0.1em]">{format(new Date(booking.date), 'MMM d', { locale: es })}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 rounded-[18px] md:rounded-[24px] flex flex-col items-center justify-center border-2 border-white shadow-md ring-1 ring-slate-100 group-hover:ring-emerald-100 transition-all shrink-0">
+                            <span className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest">{format(new Date(booking.date), 'MMM', { locale: es })}</span>
+                            <span className="text-base md:text-xl font-black text-slate-800 leading-none mt-0.5">{format(new Date(booking.date), 'd')}</span>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-lg leading-tight flex items-center gap-2">
-                          {booking.clientName}
-                          {booking.clientUid !== 'manual' && clientRatingsMap[booking.clientUid] > 0 && (
-                            <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-bold">
-                              <Star className="w-3 h-3 fill-current" /> {clientRatingsMap[booking.clientUid].toFixed(1)}
-                            </span>
-                          )}
-                        </h4>
-                        <div className="flex items-center gap-2 text-sm text-slate-500 mt-1.5 font-medium">
-                          <span className="flex items-center gap-1.5 text-slate-600"><Scissors className="w-3.5 h-3.5" /> {booking.serviceName || 'Servicio'}</span>
-                          <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {barbers.find(b => b.id === booking.barberId)?.name || 'Barbero'}</span>
+                      {/* Right: Content Column */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        {/* Top: Name & Actions */}
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-900 text-base md:text-xl leading-none truncate group-hover:text-emerald-700 transition-colors">
+                              {booking.clientName}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1.5 md:mt-2 text-slate-500 text-[10px] md:text-xs font-medium">
+                              <span className="flex items-center gap-1.5"><Scissors className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-60" /> {booking.serviceName || 'Servicio'}</span>
+                              <span className="w-1 h-1 rounded-full bg-slate-300" />
+                              <span className="flex items-center gap-1.5"><User className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-60" /> {barbers.find(b => b.id === booking.barberId)?.name || 'Barbero'}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 -mt-1">
+                            {booking.clientPhone && (
+                              <a href={`tel:${booking.clientPhone}`} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors" title="Llamar">
+                                <Phone className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                              </a>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "w-8 h-8 md:w-10 md:h-10 rounded-full border border-slate-100 bg-white shadow-sm flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-800 transition-all outline-none")}>
+                                <MoreVertical className="w-4 h-4 md:w-5 md:h-5" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52 rounded-2xl shadow-xl border-slate-100 p-2">
+                                <DropdownMenuItem className="gap-2 cursor-pointer font-medium p-3 rounded-xl focus:bg-emerald-50 focus:text-emerald-700" onClick={() => handleUpdateStatus(booking, 'confirmed')}>
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Confirmar Cita
+                                </DropdownMenuItem>
+                                {booking.status !== 'completed' && (
+                                  <DropdownMenuItem className="gap-2 cursor-pointer p-3 rounded-xl focus:bg-blue-50 focus:text-blue-700" onClick={() => handleUpdateStatus(booking, 'completed')}>
+                                    <CheckCircle2 className="w-4 h-4 text-blue-500" /> Finalizar y Cobrar
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem className="gap-2 cursor-pointer p-3 rounded-xl focus:bg-red-50 focus:text-red-700" onClick={() => handleUpdateStatus(booking, 'cancelled')}>
+                                  <XCircle className="w-4 h-4 text-red-500" /> Cancelar Cita
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+
+                        {/* Bottom: Meta Row */}
+                        <div className="-ml-[4.5rem] flex w-[calc(100%+4.5rem)] flex-wrap items-center justify-start gap-2 mt-3 pt-3 border-t border-slate-50 md:ml-0 md:mt-4 md:w-auto md:flex-nowrap md:justify-between md:gap-0">
+                          <div className="flex items-center gap-1.5 md:gap-3">
+                            <div className="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-50 px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs">
+                              <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" /> {booking.startTime}
+                            </div>
+                            <Badge 
+                              variant="secondary" 
+                              className={cn(
+                                "border font-bold text-[9px] md:text-[10px] tracking-wide px-2 md:px-3 py-1 rounded-full",
+                                booking.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
+                                booking.status === 'completed' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                                booking.status === 'cancelled' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-amber-100 text-amber-800 border-amber-200'
+                              )}
+                            >
+                              {booking.status === 'confirmed' ? 'Confirmada' : booking.status === 'completed' ? 'Realizada' : booking.status === 'cancelled' ? 'Cancelada' : 'Pendiente'}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-center gap-1.5 md:gap-2">
+                            {booking.clientUid !== 'manual' && clientRatingsMap[booking.clientUid] > 0 && (
+                              <div className="flex items-center gap-1 text-[10px] md:text-xs bg-amber-50 text-amber-600 px-2 py-1 rounded-full font-bold">
+                                <Star className="w-3 h-3 fill-current" /> {clientRatingsMap[booking.clientUid].toFixed(1)}
+                              </div>
+                            )}
+                            <span className="font-black text-slate-800 text-sm md:text-lg">€{booking.price || 0}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto">
-                      <div className="text-right hidden sm:block">
-                        <p className="font-bold text-slate-800">€{booking.price || 0}</p>
-                        <Badge 
-                          variant="secondary" 
-                          className={cn(
-                            "mt-1 border font-bold text-[10px] tracking-wide px-2 py-0.5 rounded-md",
-                            booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                            booking.status === 'completed' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                            booking.status === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                          )}
-                        >
-                          {booking.status === 'confirmed' ? 'Confirmada' : booking.status === 'completed' ? 'Realizado' : booking.status === 'cancelled' ? 'Cancelada' : 'Pendiente'}
-                        </Badge>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors outline-none shrink-0")}>
-                          <MoreVertical className="w-5 h-5 text-slate-600" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 rounded-[16px] shadow-lg border-slate-100 p-2">
-                          <DropdownMenuItem className="gap-2 cursor-pointer font-medium p-3 rounded-xl focus:bg-emerald-50 focus:text-emerald-700" onClick={() => handleUpdateStatus(booking, 'confirmed')}>
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Confirmar
-                          </DropdownMenuItem>
-                          {booking.status !== 'completed' && (
-                            <DropdownMenuItem className="gap-2 cursor-pointer py-2.5 rounded-lg my-1 focus:bg-slate-50" onClick={() => handleUpdateStatus(booking, 'completed')}>
-                              <CheckCircle2 className="w-4 h-4 text-blue-500" /> <span className="font-medium text-slate-700">Finalizar y Evaluar</span>
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem className="gap-2 cursor-pointer py-2.5 rounded-lg my-1 focus:bg-red-50 focus:text-red-600 group" onClick={() => handleUpdateStatus(booking, 'cancelled')}>
-                            <XCircle className="w-4 h-4 text-red-400 group-focus:text-red-600" /> <span className="font-medium text-slate-700 group-focus:text-red-700">Cancelar cita</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                </div>
-              )))}
+                  </div>
+                    );
+                  })}
             </div>
+            
             <Button 
               variant="ghost" 
               className="w-full mt-6 text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-xl font-medium"
