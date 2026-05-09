@@ -144,7 +144,6 @@ service cloud.firestore {
         (!data.keys().hasAny(['address']) || isOptionalString(data.address, 300)) &&
         (!data.keys().hasAny(['locationReference']) || isOptionalString(data.locationReference, 300)) &&
         (!data.keys().hasAny(['phone']) || isOptionalString(data.phone, 50)) &&
-        (!data.keys().hasAny(['whatsapp']) || isOptionalString(data.whatsapp, 50)) &&
         (!data.keys().hasAny(['regionSlug']) || isOptionalString(data.regionSlug, 120)) &&
         (!data.keys().hasAny(['citySlug']) || isOptionalString(data.citySlug, 120)) &&
         (!data.keys().hasAny(['geohash']) || isOptionalString(data.geohash, 40)) &&
@@ -225,9 +224,7 @@ service cloud.firestore {
         'reviewed',
         'clientRated',
         'clientRating',
-        'createdAt',
-        'reminderChannel',
-        'prePaid'
+        'createdAt'
       ];
 
       return data.keys().hasOnly(allowedFields) &&
@@ -250,8 +247,6 @@ service cloud.firestore {
         (!data.keys().hasAny(['reviewed']) || data.reviewed is bool) &&
         (!data.keys().hasAny(['clientRated']) || data.clientRated is bool) &&
         (!data.keys().hasAny(['clientRating']) || data.clientRating is number) &&
-        (!data.keys().hasAny(['reminderChannel']) || data.reminderChannel in ['whatsapp', 'email']) &&
-        (!data.keys().hasAny(['prePaid']) || data.prePaid is bool) &&
         (!data.keys().hasAny(['createdAt']) || isOptionalTimestampLike(data.createdAt));
     }
 

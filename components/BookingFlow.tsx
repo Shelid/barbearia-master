@@ -17,6 +17,7 @@ import { db, auth, getAppCheckTokenForBackend } from '@/lib/firebase';
 import { collection, getDocs, query, where, writeBatch, doc, getDoc, setDoc } from 'firebase/firestore';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { toast } from 'sonner';
+import { VerifyPhoneDialog } from '@/components/VerifyPhoneDialog';
 
 interface BookingFlowProps {
   shopId: string;
@@ -38,6 +39,7 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
   const [waitlistName, setWaitlistName] = useState('');
   const [waitlistPhone, setWaitlistPhone] = useState('');
   const [waitlistWebsite, setWaitlistWebsite] = useState('');
+  const [verifyPhoneOpen, setVerifyPhoneOpen] = useState(false);
 
   useEffect(() => {
     if (!shopId) return;
@@ -195,6 +197,7 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
             role: 'client',
             displayName: currentUser.displayName,
             createdAt: new Date().toISOString(),
+            phoneVerified: false
           });
         }
       } catch (error) {
@@ -204,16 +207,19 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
       }
     }
 
+    // Check phone verification
+    const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    const userData = uDoc.exists() ? uDoc.data() : null;
+    
+    if (!userData?.phoneVerified) {
+      setLoading(false);
+      setVerifyPhoneOpen(true);
+      return;
+    }
+
     try {
-      let clientPhone = '';
-      let clientPhotoUrl = '';
-      if (currentUser?.uid) {
-        const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        if (uDoc.exists()) {
-          clientPhone = uDoc.data().phone || '';
-          clientPhotoUrl = uDoc.data().photoUrl || '';
-        }
-      }
+      let clientPhone = userData?.phone || '';
+      let clientPhotoUrl = userData?.photoUrl || '';
 
       const bookingData = {
         barbershopId: shopId,
@@ -609,8 +615,10 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
                 >
                   {loading ? 'Procesando...' : 'Confirmar y Reservar'}
                 </Button>
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-center text-xs text-muted-foreground mt-3">
                   Al confirmar, aceptas nuestra política de cancelación (2h antes).
+                  <br />
+                  <span className="font-medium text-amber-600 mt-1 block">Nota: Será necesario verificar tu número de teléfono antes de completar la reserva.</span>
                 </p>
               </div>
             </motion.div>
@@ -637,6 +645,14 @@ export function BookingFlow({ shopId, services, barbers, shopHours }: BookingFlo
           )}
         </AnimatePresence>
       </CardContent>
+      
+      <VerifyPhoneDialog 
+        open={verifyPhoneOpen}
+        onOpenChange={setVerifyPhoneOpen}
+        onVerified={() => {
+          handleConfirm(); // Auto-continue booking after verification
+        }}
+      />
     </Card>
   );
 }

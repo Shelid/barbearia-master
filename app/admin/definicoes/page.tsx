@@ -13,6 +13,7 @@ import {
   Settings,
   Store,
   Upload,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +57,6 @@ type ShopSettings = {
   name?: string;
   slug?: string;
   phone?: string;
-  whatsapp?: string;
   region?: string;
   city?: string;
   address?: string;
@@ -532,15 +532,6 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="whatsapp" className="font-bold text-slate-700">WhatsApp</Label>
-                        <Input
-                          id="whatsapp"
-                          value={shop.whatsapp || ''}
-                          className="h-11 rounded-xl border-slate-200 bg-slate-50 focus-visible:ring-emerald-500"
-                          onChange={(e) => setShop({ ...shop, whatsapp: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
                         <Label htmlFor="region" className="font-bold text-slate-700">Comunidad / Provincia</Label>
                         <Select
                           value={selectedRegion?.name ?? ''}
@@ -812,21 +803,6 @@ export default function SettingsPage() {
                     onCheckedChange={(value) => setShop({ ...shop, notifyEmail: value })}
                   />
                 </div>
-
-                <div className="flex items-center justify-between rounded-[24px] border border-slate-100 bg-slate-50/50 p-6 opacity-60 grayscale">
-                  <div className="space-y-1">
-                    <Label className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                      WhatsApp
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-600">
-                        Proximamente
-                      </span>
-                    </Label>
-                    <p className="text-sm font-medium text-slate-500">
-                      Avisos automaticos para barbero y cliente.
-                    </p>
-                  </div>
-                  <Switch disabled />
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -844,6 +820,28 @@ export default function SettingsPage() {
                   <Button variant="outline" type="button" size="lg" className="rounded-full font-semibold shadow-sm">
                     Recuperar / cambiar contrasena
                   </Button>
+                </div>
+
+                <div className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-slate-50 p-8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-slate-800">Teléfono verificado</h4>
+                      <p className="text-sm font-medium text-slate-500">Este es el número vinculado a tu cuenta para validaciones de seguridad.</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm border border-slate-100 w-full max-w-sm">
+                    <span className="font-display text-lg font-bold text-slate-900 tracking-wider">
+                      {profile?.phone || 'No disponible'}
+                    </span>
+                    {profile?.phoneVerified && (
+                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-none px-3 py-1 ml-auto">
+                        Verificado
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="rounded-[28px] border border-red-100 bg-red-50/30 p-8">

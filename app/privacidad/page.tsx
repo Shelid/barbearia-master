@@ -48,7 +48,7 @@ export default function PrivacyPage() {
           <p>Segun el uso que se haga de la plataforma, {LEGAL_SERVICE_NAME} puede tratar las siguientes categorias de datos:</p>
           <ul>
             <li>Datos identificativos y de cuenta: nombre, correo electronico, UID de autenticacion y rol del usuario.</li>
-            <li>Datos de perfil: telefono, WhatsApp, nombre comercial, direccion, ciudad, provincia y descripcion de la barberia.</li>
+            <li>Datos de perfil: telefono, nombre comercial, direccion, ciudad, provincia y descripcion de la barberia.</li>
             <li>Datos de reserva: cliente, barbero, servicio, fecha, hora, precio, estado de la cita y observaciones operativas.</li>
             <li>Datos de reputacion: valoraciones y comentarios publicados por clientes autenticados.</li>
             <li>Datos de localizacion: coordenadas de la barberia y referencias de llegada cuando el administrador las facilita.</li>

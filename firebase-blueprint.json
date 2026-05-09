@@ -30,7 +30,6 @@
         "lat": { "type": "number" },
         "lng": { "type": "number" },
         "phone": { "type": "string" },
-        "whatsapp": { "type": "string" },
         "logoUrl": { "type": "string" },
         "coverUrl": { "type": "string" },
         "plan": { "type": "string", "enum": ["starter", "pro", "business"] },
@@ -87,8 +86,6 @@
         "startTime": { "type": "string" },
         "endTime": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "completed"] },
-        "reminderChannel": { "type": "string", "enum": ["whatsapp", "email"] },
-        "prePaid": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["barbershopId", "barberId", "serviceId", "clientName", "date", "startTime", "status"]

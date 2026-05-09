@@ -15,7 +15,8 @@ import {
   Bell,
   Image as ImageIcon,
   User as UserIcon,
-  Megaphone
+  Megaphone,
+  CheckCircle2
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,6 +36,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { VerifyPhoneDialog } from '@/components/VerifyPhoneDialog';
 
 const navItems = [
   { name: 'Agenda', href: '/admin', icon: Calendar },
@@ -56,7 +58,7 @@ type PendingBooking = {
   startTime: string;
 };
 
-function SidebarContent({ pathname, userEmail, onLogout }: { pathname: string; userEmail?: string; onLogout: () => void }) {
+function SidebarContent({ pathname, userEmail, phoneVerified, onLogout }: { pathname: string; userEmail?: string; phoneVerified?: boolean; onLogout: () => void }) {
   return (
     <div className="flex flex-col h-full bg-slate-100 border-r border-slate-200">
       <div className="p-6 flex items-center gap-3">
@@ -129,7 +131,10 @@ function SidebarContent({ pathname, userEmail, onLogout }: { pathname: string; u
               <UserIcon className="w-5 h-5 text-slate-600" />
             </div>
             <div className="flex flex-col items-start min-w-0 flex-1">
-              <span className="text-sm font-bold text-slate-800 truncate w-full text-left">Administrador</span>
+              <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800 truncate w-full text-left">
+                Administrador
+                {phoneVerified && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" title="Teléfono verificado" />}
+              </span>
               <span className="text-[11px] text-slate-500 font-medium truncate w-full text-left">
                 {userEmail || 'Cuenta'}
               </span>
@@ -153,12 +158,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const [shopId, setShopId] = React.useState<string | null>(null);
   const [pendingBookings, setPendingBookings] = React.useState<PendingBooking[]>([]);
+  const [verifyPhoneOpen, setVerifyPhoneOpen] = React.useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (!loading && profile && !profile.phoneVerified) {
+      setVerifyPhoneOpen(true);
     }
-  }, [user, loading, router]);
+  }, [user, profile, loading, router]);
 
   useEffect(() => {
     if (!profile?.barbershopId) return;
@@ -230,7 +238,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-[#F8FAFC] font-sans overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-72 h-full shrink-0">
-        <SidebarContent pathname={pathname} userEmail={user.email || undefined} onLogout={handleLogout} />
+        <SidebarContent pathname={pathname} userEmail={user.email || undefined} phoneVerified={profile?.phoneVerified} onLogout={handleLogout} />
       </aside>
 
       {/* Main Content */}
@@ -243,7 +251,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Menu className="w-6 h-6 text-slate-700" />
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72 border-none">
-                <SidebarContent pathname={pathname} userEmail={user.email || undefined} onLogout={handleLogout} />
+                <SidebarContent pathname={pathname} userEmail={user.email || undefined} phoneVerified={profile?.phoneVerified} onLogout={handleLogout} />
               </SheetContent>
             </Sheet>
             
@@ -294,10 +302,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 lg:px-8 pb-12 pt-2 bg-[#F8FAFC]">
           <div className="max-w-6xl mx-auto">
-            {children}
+            {profile?.phoneVerified ? children : (
+              <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+                <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4">
+                  <Bell className="w-8 h-8 text-slate-500" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Verificación pendiente</h2>
+                <p className="text-slate-500 max-w-md mb-6">
+                  Para poder activar tu barbería y hacerla visible para los clientes, necesitas verificar tu número de teléfono.
+                </p>
+                <Button onClick={() => setVerifyPhoneOpen(true)} size="lg" className="rounded-full">
+                  Verificar Teléfono
+                </Button>
+              </div>
+            )}
           </div>
         </main>
       </div>
+
+      <VerifyPhoneDialog 
+        open={verifyPhoneOpen}
+        onOpenChange={(open) => {
+          // If not verified, don't let them close it easily unless they click outside (but we want to block them)
+          if (profile?.phoneVerified) {
+            setVerifyPhoneOpen(open);
+          } else {
+             // Let them close it if they want, but they still see the locked screen
+             setVerifyPhoneOpen(open);
+          }
+        }}
+        onVerified={() => {
+          // Refresh page or update state to show content
+          window.location.reload();
+        }}
+        title="Verifica tu barbería"
+        description="Para poder activar tu barbería y recibir citas, necesitamos verificar tu número de teléfono móvil. Esto evita perfiles falsos en la plataforma."
+      />
     </div>
   );
 }

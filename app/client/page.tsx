@@ -536,7 +536,18 @@ export default function ClientDashboard() {
             </div>
             <div className="space-y-2">
               <Label>Teléfono *</Label>
-              <Input type="tel" value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="Ej. +34 600 000 000" />
+              <div className="flex items-center gap-2">
+                <Input type="tel" value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="Ej. +34 600 000 000" disabled={userData?.phoneVerified} className="flex-1" />
+                {userData?.phoneVerified ? (
+                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none whitespace-nowrap">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Verificado
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none whitespace-nowrap">
+                    No verificado
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Foto de perfil (Opcional)</Label>

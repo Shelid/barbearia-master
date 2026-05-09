@@ -163,8 +163,6 @@ export default function ShopView({ slug, preloadedShop }: { slug: string, preloa
     });
   const formattedCoordinates = formatCoordinates(shop.latitude, shop.longitude);
   const phoneHref = shop.phone ? `tel:${shop.phone}` : '';
-  const whatsappDigits = (shop.whatsapp || '').replace(/\D/g, '');
-  const whatsappHref = whatsappDigits ? `https://wa.me/${whatsappDigits}` : '';
   const backHref = shop.regionSlug ? `/${shop.regionSlug}` : '/';
   const reviewsCount = reviews.length;
   const avgRating =
@@ -326,32 +324,6 @@ export default function ShopView({ slug, preloadedShop }: { slug: string, preloa
                         <Phone className="h-5 w-5" />
                         <div>
                           <p className="text-xs font-bold uppercase tracking-wider">Telefono</p>
-                          <p>No disponible</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {whatsappHref ? (
-                      <a
-                        href={whatsappHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={cn(
-                          buttonVariants({ variant: 'outline' }),
-                          'h-auto flex-1 justify-start rounded-2xl px-6 py-4'
-                        )}
-                      >
-                        <MessageCircle className="mr-3 h-5 w-5 text-green-500" />
-                        <div className="text-left">
-                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">WhatsApp</p>
-                          <p className="font-bold">{shop.whatsapp}</p>
-                        </div>
-                      </a>
-                    ) : (
-                      <div className="flex flex-1 items-center gap-3 rounded-2xl border border-border px-6 py-4 text-muted-foreground">
-                        <MessageCircle className="h-5 w-5" />
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider">WhatsApp</p>
                           <p>No disponible</p>
                         </div>
                       </div>

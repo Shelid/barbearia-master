@@ -17,10 +17,10 @@ import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebas
 import { toast } from 'sonner';
 
 const DEFAULT_REGIONS = [
-  { name: 'Asturias', slug: 'asturias', count: 12, image: 'https://picsum.photos/seed/asturias/800/600' },
-  { name: 'Madrid', slug: 'madrid', count: 45, image: 'https://picsum.photos/seed/madrid/800/600' },
-  { name: 'Cataluña', slug: 'cataluna', count: 38, image: 'https://picsum.photos/seed/barcelona/800/600' },
-  { name: 'Andalucía', slug: 'andalucia', count: 29, image: 'https://picsum.photos/seed/sevilla/800/600' },
+  { name: 'Asturias', slug: 'asturias', count: 12, image: 'https://images.pexels.com/photos/3722818/pexels-photo-3722818.jpeg?auto=compress&cs=tinysrgb&w=800' },
+  { name: 'Madrid', slug: 'madrid', count: 45, image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?q=80&w=800&auto=format&fit=crop' },
+  { name: 'Cataluña', slug: 'cataluna', count: 38, image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?q=80&w=800&auto=format&fit=crop' },
+  { name: 'Andalucía', slug: 'andalucia', count: 29, image: 'https://images.pexels.com/photos/230743/pexels-photo-230743.jpeg?auto=compress&cs=tinysrgb&w=800' },
 ];
 
 export default function LandingPage() {
@@ -305,7 +305,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {activeRegions.slice(0, 4).map((region, index) => (
                 <motion.div
                   key={region.slug}
@@ -314,15 +314,31 @@ export default function LandingPage() {
                   transition={{ delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Link href={`/${region.slug}`} className="group block relative aspect-[4/5] overflow-hidden rounded-2xl bg-black">
+                  <Link href={`/${region.slug}`} className="group block relative aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-[24px] bg-slate-100 cursor-pointer">
+                    {/* Background Image */}
                     <img 
                       src={region.image} 
                       alt={region.name}
-                      className="w-full h-full object-cover opacity-70 group-hover:scale-110 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-                      <h3 className="text-white font-display text-lg md:text-2xl font-bold leading-tight mb-0.5 md:mb-1">{region.name}</h3>
-                      <p className="text-white/80 text-xs md:text-sm font-medium">{region.count} Barberías</p>
+                    
+                    {/* Top Right Badge */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <div className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                        <Scissors className="w-3 h-3" />
+                        {region.count} Locales
+                      </div>
+                    </div>
+
+                    {/* Gradient Overlay for Text Readability */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/10 to-black/80 z-10 transition-opacity duration-300 group-hover:to-black/90" />
+                    
+                    {/* Text Content */}
+                    <div className="absolute inset-x-0 bottom-0 p-6 z-20 flex flex-col justify-end">
+                      <h3 className="text-white font-display text-3xl font-bold leading-tight drop-shadow-md">
+                        {region.name}
+                      </h3>
                     </div>
                   </Link>
                 </motion.div>

@@ -59,10 +59,6 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-3 text-slate-400">
                 <X className="w-5 h-5 text-slate-300 shrink-0 mt-0.5" />
-                <span>Lembretes WhatsApp</span>
-              </li>
-              <li className="flex items-start gap-3 text-slate-400">
-                <X className="w-5 h-5 text-slate-300 shrink-0 mt-0.5" />
                 <span>Relatórios</span>
               </li>
               <li className="flex items-start gap-3 text-slate-400">
@@ -105,10 +101,6 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-3 text-slate-200">
                 <Check className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Lembretes WhatsApp auto</span>
-              </li>
-              <li className="flex items-start gap-3 text-slate-200">
-                <Check className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <span>Relatórios mensais</span>
               </li>
               <li className="flex items-start gap-3 text-slate-200">
@@ -148,19 +140,27 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-3 text-slate-700">
                 <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>Agendamentos ilimitados</span>
+              </li>
+              <li className="flex items-start gap-3 text-slate-700">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>Relatórios mensais</span>
+              </li>
+              <li className="flex items-start gap-3 text-slate-700">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>Prioridade máxima na central</span>
+              </li>
+              <li className="flex items-start gap-3 text-slate-700">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>Galeria de fotos</span>
+              </li>
+              <li className="flex items-start gap-3 text-slate-700">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <span>Modo férias</span>
+              </li>
+              <li className="flex items-start gap-3 text-slate-700">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <span>Domínio personalizado</span>
-              </li>
-              <li className="flex items-start gap-3 text-slate-700">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Analytics avançado</span>
-              </li>
-              <li className="flex items-start gap-3 text-slate-700">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Pré-pagamento online</span>
-              </li>
-              <li className="flex items-start gap-3 text-slate-700">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>Política cancelamento pago</span>
               </li>
               <li className="flex items-start gap-3 text-slate-700">
                 <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
