@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -54,15 +54,9 @@ export default function LoginPage() {
       prompt: 'select_account'
     });
     try {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        await signInWithRedirect(auth, provider);
-        return; // Redirects the page, no need to stop loading state
-      } else {
-        await signInWithPopup(auth, provider);
-        toast.success('¡Bienvenido!');
-        // Redirection is handled by the useEffect above once profile loads
-      }
+      await signInWithPopup(auth, provider);
+      toast.success('¡Bienvenido!');
+      // Redirection is handled by the useEffect above once profile loads
     } catch (error: any) {
       toast.error('Error con Google: ' + error.message);
       setGoogleLoading(false);
